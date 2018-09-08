@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.10)
+project(TCS)
+
+set(CMAKE_CXX_STANDARD 14)
+
+add_executable(TCS main.cpp)
+FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/fsa.txt
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
