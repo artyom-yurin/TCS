@@ -6,6 +6,33 @@
 
 using namespace std;
 
+struct Transaction{
+    string firstState;
+    string nameTransaction;
+    string finalTransaction;
+};
+
+vector<Transaction> getTransactions(vector<string> trans)
+{
+    vector<Transaction> result;
+    while(!trans.empty())
+    {
+        string transactionString = trans.back();
+        trans.pop_back();
+        Transaction newTrans;
+        size_t startPosition = 0;
+        size_t finishPosition = transactionString.find('>', startPosition);
+        newTrans.firstState = transactionString.substr(startPosition, finishPosition);
+        startPosition = finishPosition + 1;
+        finishPosition = transactionString.find('>', startPosition);
+        newTrans.nameTransaction = transactionString.substr(startPosition, finishPosition - startPosition);
+        startPosition = finishPosition + 1;
+        newTrans.finalTransaction = transactionString.substr(startPosition);
+        result.push_back(newTrans);
+    }
+    return result;
+}
+
 vector<string> getValues(string states, const string &prefix) {
     string temp = states.substr(0, states.size());
     vector<string> result;
@@ -72,6 +99,36 @@ int main() {
     if(e1)
     {
         output << "Error:\nE1: A state s is not in set of states\n";
+        return 0;
+    }
+
+    std::string finalStateString;
+    std::getline(input, finalStateString);
+    vector<string> finalStates = getValues(finalStateString, "fin.st={");
+
+    std::string transString;
+    std::getline(input, transString);
+    vector<Transaction> transactions = getTransactions(getValues(transString, "trans={"));
+
+    bool e3 = false;
+    for (Transaction trans: transactions) {
+        if(!e3)
+        {
+            bool exist = false;
+            for(const string &alph: alpha)
+            {
+                if(trans.nameTransaction.compare(alph) == 0)
+                {
+                    exist = true;
+                }
+            }
+            e3 = !exist;
+        }
+    }
+
+    if(e3)
+    {
+        output << "Error:\nE3: A transition a is not represented in the alphabet\n";
         return 0;
     }
 
