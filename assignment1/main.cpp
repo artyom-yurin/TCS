@@ -54,6 +54,12 @@ int main() {
     std::getline(input, initStateString);
     vector<string> initState = getValues(initStateString, "init.st={");
 
+    if(initState.empty())
+    {
+        output << "Error:\nE4: Initial state is not defined";
+        return 0;
+    }
+
     bool e1 = true;
     for(const string &state: states)
     {
@@ -66,6 +72,7 @@ int main() {
     if(e1)
     {
         output << "Error:\nE1: A state s is not in set of states\n";
+        return 0;
     }
 
     output.close();
