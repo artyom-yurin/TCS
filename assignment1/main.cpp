@@ -60,7 +60,7 @@ vector<Transaction> getTransactions(const string &transString) {
     return result;
 }
 
-int checkState(const string & stateString, vector<string> &states, ostream &output) {
+int checkState(const string &stateString, vector<string> &states, ostream &output) {
 
     int index = -1;
     bool e1 = true;
@@ -72,7 +72,7 @@ int checkState(const string & stateString, vector<string> &states, ostream &outp
     }
 
     if (e1) {
-        output << "Error:\nE1: A state " + stateString +" is not in set of states\n";
+        output << "Error:\nE1: A state " + stateString + " is not in set of states\n";
     }
     return index;
 }
@@ -86,51 +86,106 @@ int checkInitialState(vector<string> &initState, vector<string> &states, ostream
     return checkState(initState.back(), states, output);
 }
 
-void dfs (int v, bool * used, int** g, unsigned long size) {
+void dfs(int v, bool *used, int **g, unsigned long size) {
     used[v] = true;
     for (int i = 0; i < size; i++)
-        if(g[v][i] == 1)
-        {
+        if (g[v][i] == 1) {
             if (!used[i])
-                dfs (i, used, g, size);
+                dfs(i, used, g, size);
         }
 }
 
-bool checkJoint(int initStateId, vector<string> states, vector<Transaction> transactions)
-{
-    int** g = new int*[states.size()];
-    for(int i = 0; i < states.size(); ++i)
+bool checkJoint(int initStateId, vector<string> & states, vector<Transaction> & transactions) {
+    int **g = new int *[states.size()];
+    for (int i = 0; i < states.size(); ++i)
         g[i] = new int[states.size()];
 
-    bool* used = new bool [states.size()];
+    bool *used = new bool[states.size()];
 
     map<string, int> stateId;
 
-    for(int i = 0; i < states.size();i++)
-    {
+    for (int i = 0; i < states.size(); i++) {
         used[i] = false;
         stateId.insert(pair<string, int>(states[i], i));
-        for(int j = 0; j < states.size(); j++)
-        {
+        for (int j = 0; j < states.size(); j++) {
             g[i][j] = 0;
         }
     }
 
-    for(Transaction & trans: transactions)
-    {
+    for (Transaction &trans: transactions) {
         g[stateId[trans.firstState]][stateId[trans.secondState]] = 1;
         g[stateId[trans.secondState]][stateId[trans.firstState]] = 1;
     }
 
     dfs(initStateId, used, g, states.size());
 
-    for(int i =0; i < states.size(); i++)
-    {
-        if(!used[i])
-        {
+    for (int i = 0; i < states.size(); i++) {
+        if (!used[i]) {
             return false;
         }
     }
+    return true;
+}
+
+bool checkReachable(int initStateId, vector<string> & states, vector<Transaction> & transactions) {
+    int **g = new int *[states.size()];
+    for (int i = 0; i < states.size(); ++i)
+        g[i] = new int[states.size()];
+
+    bool *used = new bool[states.size()];
+
+    map<string, int> stateId;
+
+    for (int i = 0; i < states.size(); i++) {
+        used[i] = false;
+        stateId.insert(pair<string, int>(states[i], i));
+        for (int j = 0; j < states.size(); j++) {
+            g[i][j] = 0;
+        }
+    }
+
+    for (Transaction &trans: transactions) {
+        g[stateId[trans.firstState]][stateId[trans.secondState]] = 1;
+    }
+
+    dfs(initStateId, used, g, states.size());
+
+    for (int i = 0; i < states.size(); i++) {
+        if (!used[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool checkDeterministic(vector<string> & states, vector<string> & alpha,vector<Transaction> & transactions)
+{
+    int **g = new int *[states.size()];
+    for (int i = 0; i < states.size(); ++i)
+        g[i] = new int[alpha.size()];
+
+    map<string, int> stateId;
+    map<string, int> alphaId;
+
+    for (int i = 0; i < alpha.size(); i++)
+    {
+        alphaId.insert(pair<string, int>(alpha[i], i));
+    }
+
+    for (int i = 0; i < states.size(); i++) {
+        stateId.insert(pair<string, int>(states[i], i));
+        for (int j = 0; j < alpha.size(); j++) {
+            g[i][j] = 0;
+        }
+    }
+
+    for (Transaction & transaction: transactions)
+    {
+        if (g[stateId[transaction.firstState]][alphaId[transaction.nameTransaction]])
+            return false;
+        g[stateId[transaction.firstState]][alphaId[transaction.nameTransaction]] = 1;
+    }
+
     return true;
 }
 
@@ -164,13 +219,20 @@ int main() {
     std::getline(input, finalStateString);
     vector<string> finalStates = getValues(finalStateString, "fin.st={");
 
+    for(string & state: finalStates)
+    {
+        if(checkState(state, states, output) == -1)
+        {
+            return 0;
+        }
+    }
+
     std::string transString;
     std::getline(input, transString);
     vector<Transaction> transactions = getTransactions(transString);
 
     for (Transaction trans: transactions) {
-        if(checkState(trans.firstState, states, output) != -1 && checkState(trans.secondState, states, output) != -1)
-        {
+        if (checkState(trans.firstState, states, output) != -1 && checkState(trans.secondState, states, output) != -1) {
             bool exist = false;
             for (const string &alph: alpha) {
                 if (trans.nameTransaction.compare(alph) == 0) {
@@ -178,9 +240,8 @@ int main() {
                 }
             }
 
-            if(!exist)
-            {
-                output << "Error:\nE3: A transition a is not represented in the alphabet\n";
+            if (!exist) {
+                output << "Error:\nE3: A transition " + trans.nameTransaction + " is not represented in the alphabet\n";
                 return 0;
             }
         } else {
@@ -188,10 +249,30 @@ int main() {
         }
     }
 
-    if(!checkJoint(initStateId, states, transactions))
-    {
+    if (!checkJoint(initStateId, states, transactions)) {
         output << "Error:\nE2: Some states are disjoint\n";
         return 0;
+    }
+
+    bool w1 = finalStates.empty();
+    bool w2 = !checkReachable(initStateId, states, transactions);
+    bool w3 = !checkDeterministic(states, alpha, transactions);
+
+
+
+    if (!(w1 || w2 || w3)) {
+        output << "FSA is complete\n";
+    } else {
+        output << "FSA is incomplete\nWarning:\n";
+        if (w1) {
+            output << "W1: Accepting state is not defined\n";
+        }
+        if (w2) {
+            output << "W2: Some states are not reachable from initial state\n";
+        }
+        if (w3) {
+            output << "W3: FSA is nondeterministic\n";
+        }
     }
 
     output.close();
