@@ -186,6 +186,15 @@ bool checkDeterministic(vector<string> & states, vector<string> & alpha,vector<T
         g[stateId[transaction.firstState]][alphaId[transaction.nameTransaction]] = 1;
     }
 
+    for (int i = 0; i < states.size(); i++) {
+        for (int j = 0; j < alpha.size(); j++) {
+            if (g[i][j] != 1)
+            {
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 
