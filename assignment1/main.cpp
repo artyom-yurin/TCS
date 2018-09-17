@@ -50,7 +50,7 @@ vector<string> getValues(const string &input, const string &prefix, ofstream & o
 }
 
 /**
- * Parsing string of trransactions
+ * Parsing string of transactions
  * @param transString is input string
  * @param output is output stream for error
  * @return vector of transaction
@@ -116,17 +116,17 @@ bool checkInitialState(vector<string> &initState, vector<string> &states, ostrea
 
 /**
  * DFS
- * @param v is start point
- * @param used is vetor of usable points
- * @param g is adjacency matrix
+ * @param startIndex is start point
+ * @param visitedStates is vector of usable points
+ * @param graph is adjacency matrix
  * @param size is size of matrix
  */
-void dfs(int v, bool *used, int **g, unsigned long size) {
-    used[v] = true;
+void dfs(int startIndex, bool *visitedStates, int **graph, unsigned long size) {
+    visitedStates[startIndex] = true;
     for (int i = 0; i < size; i++)
-        if (g[v][i] == 1) {
-            if (!used[i])
-                dfs(i, used, g, size);
+        if (graph[startIndex][i] == 1) {
+            if (!visitedStates[i])
+                dfs(i, visitedStates, graph, size);
         }
 }
 
@@ -138,31 +138,31 @@ void dfs(int v, bool *used, int **g, unsigned long size) {
  * @return joint or disjoint
  */
 bool checkJoint(vector<string> &states, vector<Transaction> &transactions, ofstream & output) {
-    int **g = new int *[states.size()];
+    int **graph = new int *[states.size()];
     for (int i = 0; i < states.size(); ++i)
-        g[i] = new int[states.size()];
+        graph[i] = new int[states.size()];
 
-    bool *used = new bool[states.size()];
+    bool *visitedStates = new bool[states.size()];
 
     map<string, int> stateId;
 
     for (int i = 0; i < states.size(); i++) {
-        used[i] = false;
+        visitedStates[i] = false;
         stateId.insert(pair<string, int>(states[i], i));
         for (int j = 0; j < states.size(); j++) {
-            g[i][j] = 0;
+            graph[i][j] = 0;
         }
     }
 
     for (Transaction &trans: transactions) {
-        g[stateId[trans.firstState]][stateId[trans.secondState]] = 1;
-        g[stateId[trans.secondState]][stateId[trans.firstState]] = 1;
+        graph[stateId[trans.firstState]][stateId[trans.secondState]] = 1;
+        graph[stateId[trans.secondState]][stateId[trans.firstState]] = 1;
     }
 
-    dfs(0, used, g, states.size());
+    dfs(0, visitedStates, graph, states.size());
 
     for (int i = 0; i < states.size(); i++) {
-        if (!used[i]) {
+        if (!visitedStates[i]) {
             output << "Error:\nE2: Some states are disjoint";
             return false;
         }
@@ -179,30 +179,30 @@ bool checkJoint(vector<string> &states, vector<Transaction> &transactions, ofstr
  * @return All are reachable or not
  */
 bool checkReachable(string & initialState, vector<string> &states, vector<Transaction> &transactions) {
-    int **g = new int *[states.size()];
+    int **graph = new int *[states.size()];
     for (int i = 0; i < states.size(); ++i)
-        g[i] = new int[states.size()];
+        graph[i] = new int[states.size()];
 
-    bool *used = new bool[states.size()];
+    bool *visitedStates = new bool[states.size()];
 
     map<string, int> stateId;
 
     for (int i = 0; i < states.size(); i++) {
-        used[i] = false;
+        visitedStates[i] = false;
         stateId.insert(pair<string, int>(states[i], i));
         for (int j = 0; j < states.size(); j++) {
-            g[i][j] = 0;
+            graph[i][j] = 0;
         }
     }
 
     for (Transaction &trans: transactions) {
-        g[stateId[trans.firstState]][stateId[trans.secondState]] = 1;
+        graph[stateId[trans.firstState]][stateId[trans.secondState]] = 1;
     }
 
-    dfs(stateId[initialState], used, g, states.size());
+    dfs(stateId[initialState], visitedStates, graph, states.size());
 
     for (int i = 0; i < states.size(); i++) {
-        if (!used[i]) {
+        if (!visitedStates[i]) {
             return false;
         }
     }
@@ -217,9 +217,9 @@ bool checkReachable(string & initialState, vector<string> &states, vector<Transa
  * @return deterministic or not
  */
 bool checkDeterministic(vector<string> &states, vector<string> &alpha, vector<Transaction> &transactions) {
-    int **g = new int *[states.size()];
+    int **graph = new int *[states.size()];
     for (int i = 0; i < states.size(); ++i)
-        g[i] = new int[alpha.size()];
+        graph[i] = new int[alpha.size()];
 
     map<string, int> stateId;
     map<string, int> alphaId;
@@ -231,14 +231,14 @@ bool checkDeterministic(vector<string> &states, vector<string> &alpha, vector<Tr
     for (int i = 0; i < states.size(); i++) {
         stateId.insert(pair<string, int>(states[i], i));
         for (int j = 0; j < alpha.size(); j++) {
-            g[i][j] = 0;
+            graph[i][j] = 0;
         }
     }
 
     for (Transaction &transaction: transactions) {
-        if (g[stateId[transaction.firstState]][alphaId[transaction.nameTransaction]])
+        if (graph[stateId[transaction.firstState]][alphaId[transaction.nameTransaction]])
             return false;
-        g[stateId[transaction.firstState]][alphaId[transaction.nameTransaction]] = 1;
+        graph[stateId[transaction.firstState]][alphaId[transaction.nameTransaction]] = 1;
     }
 
     return true;
