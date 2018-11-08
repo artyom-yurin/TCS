@@ -494,7 +494,7 @@ int main() {
         return 0;
     }
 
-    output << KleeneAlgorithm(states, alpha, initState, finalStates, transactions, output);
+    output << KleeneAlgorithm(states, alpha, initState, finalStates, transactions);
 
     output.close();
     return 0;
