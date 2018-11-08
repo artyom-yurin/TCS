@@ -1,5 +1,5 @@
-states={on,off}
-alpha={turn_on,turn_off}    
-init.st={off}
-fin.st={}
-trans={off>turn_on>off,on>turn_off>on}
+states={0,1}
+alpha={a,b}
+init.st={0}
+fin.st={1}
+trans={0>a>0,0>b>1,1>a>1,1>b>1}

@@ -58,9 +58,8 @@ vector<string> getValues(const string &input, const string &prefix, ofstream & o
 vector<Transaction> getTransactions(const string &transString, ofstream & output) {
     vector<string> trans = getValues(transString, "trans={", output);
     vector<Transaction> result;
-    while (!trans.empty()) {
-        string transactionString = trans.back();
-        trans.pop_back();
+    for(string transactionString: trans)
+    {
         Transaction newTrans;
         size_t startPosition = 0;
         size_t finishPosition = transactionString.find('>', startPosition);
@@ -327,7 +326,7 @@ void printResult(vector<string> & states, vector<string> & alpha, vector<string>
 {
     bool w1 = finalStates.empty();
     bool w2 = !checkReachable(initState.back(), states, transactions);
-    bool w3 = false
+    bool w3 = false;
 
 
     if (checkComplete(states, alpha, transactions)) {
@@ -349,9 +348,87 @@ void printResult(vector<string> & states, vector<string> & alpha, vector<string>
     }
 }
 
-std::string KleeneAlgorithm()
-{
+/**
+ * Function convert deterministic FSA to regular expression
+ * @param states is vector of states
+ * @param alpha is vector of transactions' names
+ * @param initState is initial state
+ * @param finalStates is vector of final states
+ * @param transactions is vector of transaction
+ * @return regular expression
+ */
+std::string KleeneAlgorithm(vector<string> & states, vector<string> & alpha, vector<string> & initState, vector<string> & finalStates, vector<Transaction> & transactions) {
     std::string reg = "";
+
+    string **graph = new string *[states.size()];
+    for (int i = 0; i < states.size(); ++i)
+        graph[i] = new string[states.size()];
+
+    map<string, int> stateId;
+    map<string, int> alphaId;
+
+    for (int i = 0; i < alpha.size(); i++) {
+        alphaId.insert(pair<string, int>(alpha[i], i));
+    }
+
+    for (int i = 0; i < states.size(); i++) {
+        stateId.insert(pair<string, int>(states[i], i));
+        for (int j = 0; j < states.size(); j++) {
+            graph[i][j] = "{}";
+        }
+    }
+
+    for (Transaction &trans: transactions) {
+        if(graph[stateId[trans.firstState]][stateId[trans.secondState]].compare("{}") == 0)
+        {
+            graph[stateId[trans.firstState]][stateId[trans.secondState]] = "";
+        }
+        if (!graph[stateId[trans.firstState]][stateId[trans.secondState]].empty()) {
+            graph[stateId[trans.firstState]][stateId[trans.secondState]] += "|";
+        }
+        graph[stateId[trans.firstState]][stateId[trans.secondState]] += trans.nameTransaction;
+    }
+
+    for (int i = 0; i < states.size(); i++) {
+        if (!graph[i][i].empty()) {
+            graph[i][i] += "|";
+        }
+        graph[i][i] += "eps";
+    }
+
+    for (int k = 0; k < states.size() - 1; k++) {
+        string **R = new string *[states.size()];
+        for (int j = 0; j < states.size(); ++j)
+            R[j] = new string[states.size()];
+
+        for (int i = 0; i < states.size(); i++) {
+            for (int j = 0; j < states.size(); j++) {
+                R[i][j] = "(" + graph[i][k] + ")(" + graph[k][k] + ")*(" + graph[k][j] + ")|(" + graph[i][j] + ")";
+            }
+        }
+        free(graph);
+        graph = R;
+    }
+
+    int startIndex = stateId[initState.back()];
+    int k = states.size() - 1;
+    for (string finalState: finalStates)
+    {
+        int finalIndex = stateId[finalState];
+        if(!reg.empty())
+        {
+            reg += "|";
+        }
+        if(finalStates.size() > 1)
+        {
+            reg += "(";
+        }
+        reg += "(" + graph[startIndex][k] + ")(" + graph[k][k] + ")*(" + graph[k][finalIndex] + ")|(" + graph[startIndex][finalIndex] + ")";
+        if(finalStates.size() > 1)
+        {
+            reg += ")";
+        }
+    }
 
     if(reg.empty())
     {
@@ -417,9 +494,7 @@ int main() {
         return 0;
     }
 
-    //printResult(states, alpha, initState, finalStates, transactions, output);
-
-    output << KleeneAlgorithm();
+    output << KleeneAlgorithm(states, alpha, initState, finalStates, transactions, output);
 
     output.close();
     return 0;
