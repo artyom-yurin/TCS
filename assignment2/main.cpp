@@ -419,15 +419,7 @@ std::string KleeneAlgorithm(vector<string> & states, vector<string> & alpha, vec
         {
             reg += "|";
         }
-        if(finalStates.size() > 1)
-        {
-            reg += "(";
-        }
         reg += "(" + graph[startIndex][k] + ")(" + graph[k][k] + ")*(" + graph[k][finalIndex] + ")|(" + graph[startIndex][finalIndex] + ")";
-        if(finalStates.size() > 1)
-        {
-            reg += ")";
-        }
     }
 
     if(reg.empty())
