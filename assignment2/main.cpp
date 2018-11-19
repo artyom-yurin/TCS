@@ -390,6 +390,10 @@ std::string KleeneAlgorithm(vector<string> & states, vector<string> & alpha, vec
     }
 
     for (int i = 0; i < states.size(); i++) {
+        if(graph[i][i].compare("{}") == 0)
+        {
+            graph[i][i] = "";
+        }
         if (!graph[i][i].empty()) {
             graph[i][i] += "|";
         }
